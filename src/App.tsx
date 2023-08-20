@@ -8,6 +8,8 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  /** Added the showGraph propery for the IState interface */
+  showGraph: boolean,
 }
 
 /**
@@ -21,7 +23,9 @@ class App extends Component<{}, IState> {
     this.state = {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
+      // Initially set the showGraph property to false. Only show graph after user clicks Start Streaming 
       data: [],
+      showGraph: false,
     };
   }
 
@@ -29,18 +33,30 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    // Added If statement to only render graph if showGraph is true
+    if (this.state.showGraph == true) {
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const interval = setInterval(() => {
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        // Update the state by creating a new array of data that consists of
+        // Previous data in the state and the new data from server
+        this.setState({ data: serverResponds, showGraph: true });
+        
+        // Stops the call of the function after 200 calls. Every 100ms, 1 call is called and x is icremented by 1. Once x equals 200 calls, stop execution
+        x++;
+        if (x == 200) {
+          clearInterval(interval);
+        }
+      });
+    }, 100);
   }
 
   /**
